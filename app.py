@@ -1,15 +1,14 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import pickle
+import joblib
 import tensorflow as tf
 
 # Load model + scaler
 @st.cache_resource
 def load_model_and_scaler():
-    with open("scaler.pkl", "rb") as f:
-        scaler = pickle.load(f)
-    model = tf.keras.models.load_model("nn_model.h5")
+    scaler = joblib.load("scaler.joblib")
+    model = tf.keras.models.load_model("best_model.keras")
     return model, scaler
 
 model, scaler = load_model_and_scaler()
@@ -36,7 +35,6 @@ with st.form("inputs"):
     submitted = st.form_submit_button("Predict")
 
 if submitted:
-    # same column order as training!
     input_df = pd.DataFrame(
         [[
             relative_compactness,
@@ -51,7 +49,6 @@ if submitted:
         columns=scaler.feature_names_in_
     )
 
-    # scale and predict
     X_scaled = scaler.transform(input_df)
     preds = model.predict(X_scaled)
     heating, cooling = preds[0, 0], preds[0, 1]
@@ -59,5 +56,3 @@ if submitted:
     st.subheader("Predicted loads")
     st.metric("Heating Load", f"{heating:.2f}")
     st.metric("Cooling Load", f"{cooling:.2f}")
-
-
